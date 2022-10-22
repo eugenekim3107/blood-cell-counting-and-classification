@@ -4,7 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import os
 from PIL import Image
-from commonFunc import read_img, save_img
+from commonFunc import read_img, save_img, find_maxima, visualize_maxima, visualize_scale_space
 
 
 # Gradient of Image Function
@@ -31,14 +31,47 @@ def harris_detector(image, alpha=0.05):
     output = ((x2_prime * y2_prime) - (xy_prime**2)) - alpha*((x2_prime+y2_prime)**2)
     return output
 
+# Image Preprocessing
+def image_preprocessing(image):
+    image_copy = image.copy()
+    image = 1 - image
+    return image
+
+def generate_DoG(image, preprocessing=False):
+    if preprocessing:
+        image = image_preprocessing(image)
+        label0 = "DoGDetectionPreprocessed.png"
+        label1 = "DoGScalePreprocessed.png"
+    else:
+        label0 = "DoGDetectionOriginal.png"
+        label1 = "DoGScaleOriginal.png"
+    cell_radius = 30
+    gauss_cell1 = scipy.ndimage.gaussian_filter(image,
+                                                cell_radius / np.sqrt(2))
+    gauss_cell2 = scipy.ndimage.gaussian_filter(image,
+                                                cell_radius / np.sqrt(2.001))
+    DoG = gauss_cell1 - gauss_cell2
+
+    maxima = find_maxima(DoG, k_xy=5)
+    print("Number of cells: " + str(len(maxima)))
+
+    visualize_scale_space(DoG, cell_radius / np.sqrt(2),
+                          cell_radius / np.sqrt(2.001) / cell_radius / np.sqrt(
+                              2),
+                          os.path.join('cellDetectionVisual', label1))
+
+    visualize_maxima(image, maxima, cell_radius / np.sqrt(2),
+                     cell_radius / np.sqrt(2.001) / cell_radius / np.sqrt(2),
+                     os.path.join('cellDetectionVisual', label0))
+
 def main():
     folder = "cellData"
     path0 = os.path.join(folder, "PA171690.JPG")
     path1 = os.path.join(folder, "PA171690.JPG")
     path2 = os.path.join(folder, "PA171690.JPG")
-    image0 = read_img(path0, grayscale=True)
-    image1 = read_img(path1, grayscale=True)
-    image2 = read_img(path2, grayscale=True)
+    image0 = read_img(path0, grayscale=True).copy()
+    image1 = read_img(path1, grayscale=True).copy()
+    image2 = read_img(path2, grayscale=True).copy()
 
     os.makedirs('gradientImages', exist_ok=True)
 
@@ -56,7 +89,13 @@ def main():
     harris = harris_detector(image0)
     save_img(harris, "cornerScore/harrisCornerOriginal.jpg")
 
-    #
+    os.makedirs('cellDetectionVisual', exist_ok=True)
+
+    # Difference of Gaussian to approximate Laplacian of Gaussian
+    generate_DoG(image0, False)
+    generate_DoG(image0, True)
+
+
 
 
 if __name__ == '__main__':
