@@ -6,11 +6,12 @@ This code first detect the cells in image and then check the accuracy against th
 
 import cv2
 import json
+import os
 
 # replace these paths with yours
-images_path = "/Users/qaziammararshad/Documents/MSCS/Malaria_project/IML_Malaria/"
-annotation_path = "/Users/qaziammararshad/Documents/MSCS/Malaria_project/annotations.json"
-save_annotated_img_path = "/Users/qaziammararshad/Documents/MSCS/Malaria_project/annotated/"
+os.makedirs('annotated', exist_ok=True)
+annotation_path = "annotations.json"#"/Users/qaziammararshad/Documents/MSCS/Malaria_project/annotations.json"
+save_annotated_img_path = "annotated/"#"/Users/qaziammararshad/Documents/MSCS/Malaria_project/annotated/"
 
 # %%
 with open(annotation_path) as annotation_path:
@@ -22,7 +23,7 @@ for single_image_ground_truth in ground_truth:
 
     image_name = single_image_ground_truth['image_name']
     objects = single_image_ground_truth['objects']
-    image = cv2.imread(images_path + image_name)
+    image = cv2.imread(image_name)#images_path + image_name)
 
     for bbox in objects:
         cell_type = bbox['type']
