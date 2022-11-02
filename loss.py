@@ -14,9 +14,32 @@ class YoloLoss(nn.Module):
 
     def forward(self, predictions, target):
         predictions = predictions.reshape(-1, self.S, self.S, self.C + self.B*5)
-        iou_b1 = intersection_over_union(predictions[..., 21:25],
-                                         target[..., 21:25])
-        iou_b2 = intersection_over_union(predictions[..., 26:30],
-                                         target[..., 26:30])
+        iou_b1 = intersection_over_union(predictions[..., self.C+1:self.C+5],
+                                         target[..., self.C+1:self.C+5])
+        iou_b2 = intersection_over_union(predictions[..., self.C+6:self.C+10],
+                                         target[..., self.C+1:self.C+5])
         ious = torch.cat([iou_b1.unsqueeze(0), iou_b2.unsqueeze(0)], dim=0)
         iou_maxes, bestbox = torch.max(ious, dim=0)
+        exists_box = target[..., self.C].unsqueeze(3)
+
+        # For box coordinates
+        box_predictions = exists_box * (
+            (
+                bestbox * predictions[..., ] + (1 - bestbox) * predictions[..., self.C+1:self.C+5]
+            )
+        )
+
+        box_targets = exists_box * target[..., self.C+1:self.C+5]
+
+        box_predictions[..., 2:4] = torch.sign(box_predictions[..., 2:4]) * torch.sqrt(
+            torch.abs(box_predictions[..., 2:4] + 1e-6))
+
+        # (N, S, S, 25)
+        box_targets[..., 2:4] = torch.sqrt(box_targets[..., 2:4])
+
+        # For object loss
+
+        # for no object loss
+
+        #
+
