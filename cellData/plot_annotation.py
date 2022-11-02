@@ -10,20 +10,18 @@ import os
 
 # replace these paths with yours
 os.makedirs('annotated', exist_ok=True)
-annotation_path = "annotations.json"#"/Users/qaziammararshad/Documents/MSCS/Malaria_project/annotations.json"
-save_annotated_img_path = "annotated/"#"/Users/qaziammararshad/Documents/MSCS/Malaria_project/annotated/"
+annotation_path = "annotations.json"
+save_annotated_img_path = "annotated/"
 
-# %%
 with open(annotation_path) as annotation_path:
     ground_truth = json.load(annotation_path)
 
-# %%
 # iterate through all images and find TF and FP.
 for single_image_ground_truth in ground_truth:
 
     image_name = single_image_ground_truth['image_name']
     objects = single_image_ground_truth['objects']
-    image = cv2.imread(image_name)#images_path + image_name)
+    image = cv2.imread(image_name)
 
     for bbox in objects:
         cell_type = bbox['type']
@@ -34,3 +32,4 @@ for single_image_ground_truth in ground_truth:
         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 5)
 
     cv2.imwrite(save_annotated_img_path + image_name, image)
+
