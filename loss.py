@@ -37,9 +37,45 @@ class YoloLoss(nn.Module):
         # (N, S, S, 25)
         box_targets[..., 2:4] = torch.sqrt(box_targets[..., 2:4])
 
+        # (N, S, S, 4) -> (N*S*S, 4)
+        box_loss = self.mse(
+            torch.flatten(box_predictions, end_dim=-2),
+            torch.flatten(box_targets, end_dim=-2)
+        )
+
         # For object loss
+        pred_box = (
+            bestbox * predictions[..., self.C+5:self.C+6] + (1 - bestbox) * predictions[..., self.C+5:self.C+6]
+        )
+
+        # (N*S*S)
+        object_loss = self.mse(torch.flatten(exists_box * pred_box),
+                               torch.flatten(exists_box * target[..., self.C: self.C+1]))
 
         # for no object loss
+        # (N, S, S, 1) -> (N, S*S)
+        no_object_loss = self.mse(
+            torch.flatten((1 - exists_box) * predictions[..., self.C: self.C+1], start_dim=1),
+            torch.flatten((1 - exists_box) * target[..., self.C:self.C+1], start_dim=1)
+        )
 
-        #
+        no_object_loss += self.mse(
+            torch.flatten((1 - exists_box) * predictions[..., self.C: self.C + 1],start_dim=1),
+            torch.flatten((1 - exists_box) * target[..., self.C:self.C + 1],start_dim=1)
+        )
 
+        # For class loss
+        # (N, S, S, 20)
+        class_loss = self.mse(
+            torch.flatten(exists_box * predictions[..., :self.C], end_dim=-2),
+            torch.flatten(exists_box * target[..., :self.C], end_dim=-2)
+        )
+
+        loss = (
+            self.lambda_coord * box_loss
+            + object_loss
+            + self.lambda_noobj * no_object_loss
+            + class_loss
+        )
+
+        return loss
