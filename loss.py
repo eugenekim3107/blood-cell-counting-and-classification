@@ -3,7 +3,7 @@ import torch.nn as nn
 from utils import intersection_over_union
 
 class YoloLoss(nn.Module):
-    def __init__(self, S=7, B=2, C=20):
+    def __init__(self, S=7, B=2, C=6):
         super(YoloLoss, self).__init__()
         self.mse = nn.MSELoss(reduction="sum")
         self.S = S
@@ -65,7 +65,7 @@ class YoloLoss(nn.Module):
         )
 
         # For class loss
-        # (N, S, S, 20)
+        # (N, S, S, 6)
         class_loss = self.mse(
             torch.flatten(exists_box * predictions[..., :self.C], end_dim=-2),
             torch.flatten(exists_box * target[..., :self.C], end_dim=-2)

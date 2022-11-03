@@ -1,6 +1,6 @@
 import torch
 import os
-import pandas as pd
+import numpy as np
 from PIL import Image
 import json
 
@@ -9,12 +9,14 @@ import json
 # ['red blood cell', 'ring', 'gametocyte', 'schizont', 'trophozoite', 'difficult']
 
 class VOCDataset(torch.utils.data.Dataset):
-    def __init__(self, annotation_file, S=7, B=2, C=20, transform=None):
+    def __init__(self, annotation_file, S=7, B=2, C=6, img_h=960, img_w=1280, transform=None):
         self.annotations = json.load(annotation_file)
         self.transform = transform
         self.S = S
         self.B = B
         self.C = C
+        self.img_h = img_h
+        self.img_w = img_w
         self.class_map = {'red blood cell':0, 'ring':1, 'gametocyte':2, 'schizont':3, 'trophozoite':4, 'difficult':5}
 
     def __len__(self):
@@ -38,6 +40,29 @@ class VOCDataset(torch.utils.data.Dataset):
         if self.transform:
             image, boxes = self.transform(image, boxes)
 
-        
+        label_matrix = torch.zeros((self.S, self.S, self.C + 5 * self.B))
+
+        for box in boxes:
+            class_label, x, y, width, height = box.tolist()
+            class_label = int(class_label)
+            x_norm = (x + (width / 2)) / self.width
+            y_norm = (y + (height / 2)) / self.height
+            i = int(self.S * y_norm)
+            j = int(self.S * x_norm)
+            x_cell = self.S * x_norm - j
+            y_cell = self.S * y_norm - i
+
+            if label_matrix[i,j,self.C] == 0:
+                label_matrix[i,j,self.C] = 1
+                box_coord = torch.tensor(
+                    [x_cell, y_cell, width, height]
+                )
+                label_matrix[i, j, self.C+1:self.C+5] = box_coord
+                label_matrix[i, j, class_label] = 1
+
+        print(label_matrix.shape)
+        return image, label_matrix
+
+
 
 
