@@ -1,16 +1,18 @@
 import torch
-import os
-import numpy as np
 from PIL import Image
 import json
+from torch.utils.data import Dataset
+import os
+from torch.utils.data import DataLoader
 
 # Image shape = (960, 1280, 3)
 # 6 classes
 # ['red blood cell', 'ring', 'gametocyte', 'schizont', 'trophozoite', 'difficult']
 
-class VOCDataset(torch.utils.data.Dataset):
+class VOCDataset(Dataset):
     def __init__(self, annotation_file, S=7, B=2, C=6, img_h=960, img_w=1280, transform=None):
-        self.annotations = json.load(annotation_file)
+        with open(annotation_file) as file:
+            self.annotations = json.load(file)
         self.transform = transform
         self.S = S
         self.B = B
@@ -63,6 +65,19 @@ class VOCDataset(torch.utils.data.Dataset):
         print(label_matrix.shape)
         return image, label_matrix
 
+def main():
+    dir_name = "cellData"
+    file_name = "annotations.json"
+    # 345 images
+    dataset = VOCDataset(os.path.join(dir_name,file_name))
+    batch_size = 30
+    train_set, test_set = torch.utils.data.random_split(dataset, [275, 70])
+    train_loader = DataLoader(dataset=train_set, batch_size=batch_size,
+                              shuffle=True)
+    for (image,label) in train_loader:
+        print(image.shape, label.shape)
+        break
 
-
+if __name__ == '__main__':
+    main()
 
