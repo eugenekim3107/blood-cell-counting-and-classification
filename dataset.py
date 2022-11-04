@@ -1,17 +1,17 @@
 import torch
-from PIL import Image
 import json
 from torch.utils.data import Dataset
 import os
 from torch.utils.data import DataLoader
-import torchvision.transforms as transforms
+import cv2
+import numpy as np
 
 # Image shape = (960, 1280, 3)
 # 6 classes
 # ['red blood cell', 'ring', 'gametocyte', 'schizont', 'trophozoite', 'difficult']
 
-class VOCDataset(Dataset):
-    def __init__(self, annotation_file, dir_name="cellData", S=7, B=2, C=6, img_h=960, img_w=1280, transform=None):
+class CellDataset(Dataset):
+    def __init__(self, annotation_file, transform, S=7, B=2, C=6, dir_name="cellData", img_h=960, img_w=1280):
         with open(annotation_file) as file:
             self.annotations = json.load(file)
         self.transform = transform
@@ -37,10 +37,13 @@ class VOCDataset(Dataset):
                                   int(cell["bbox"]["w"]), \
                                   int(cell["bbox"]["h"])
             boxes.append([class_label, x, y, width, height])
-        image = Image.open(os.path.join(self.dir_name,image_name))
+        image = cv2.imread(os.path.join(self.dir_name,image_name), cv2.IMREAD_COLOR)
         boxes = torch.tensor(boxes)
+
         if self.transform:
-            image, boxes = self.transform(image, boxes)
+            image = image.reshape((960, 1280, 3))
+            image = (image - np.min(image))/ np.max(image)
+            image = torch.from_numpy(image)
 
         label_matrix = torch.zeros((self.S, self.S, self.C + 5 * self.B))
 
@@ -63,28 +66,37 @@ class VOCDataset(Dataset):
                 label_matrix[i, j, class_label] = 1
         return image, label_matrix
 
-class Compose(object):
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, img, bboxes):
-        for t in self.transforms:
-            img, bboxes = t(img), bboxes
-
-        return img, bboxes
-
 def main():
     dir_name = "cellData"
     file_name = "annotations.json"
     # 345 images
-    transform = Compose([transforms.Resize((960, 1280)), transforms.ToTensor()])
-    dataset = VOCDataset(os.path.join(dir_name,file_name), transform=transform)
-    batch_size = 30
+    dataset = CellDataset(annotation_file=os.path.join(dir_name,file_name),transform=True, S=15)
+    batch_size = 1
     train_set, test_set = torch.utils.data.random_split(dataset, [275, 70])
     train_loader = DataLoader(dataset=train_set, batch_size=batch_size,
                               shuffle=True)
     for (image,label) in train_loader:
-        print(image.shape, label.shape)
+        img = image[0].numpy()
+        img = (img * 255).astype(np.uint8)
+        lab = label[0]
+        height_cell = 960 / 15
+        width_cell = 1280 / 15
+        for i in range(15):
+            for j in range(15):
+                bbox = lab[i,j,6:11]
+                if bbox[0] == 1:
+                    temp_height = height_cell * i
+                    temp_width = width_cell * j
+                    x = bbox[1] * (1280 / 15)
+                    y = bbox[2] * (960 / 15)
+                    please_x = int(temp_width + x)
+                    please_y = int(temp_height + y)
+                    left_top = (int(please_x - (bbox[3]/2)), int(please_y - (bbox[4]/2)))
+                    right_bottom = (int(please_x + (bbox[3]/2)), int(please_y + (bbox[4]/2)))
+                    cv2.circle(img, (please_x, please_y), radius=3, color=(0, 0, 255), thickness=4)
+                    cv2.rectangle(img, left_top, right_bottom, (0, 255, 0),
+                             thickness=2)
+        cv2.imwrite("please.jpg", img)
         break
 
 if __name__ == '__main__':

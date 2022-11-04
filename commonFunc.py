@@ -12,6 +12,7 @@ def read_img(path, grayscale=True):
 
 
 def save_img(img, path, normalize=True):
+    img = img.numpy()
     if normalize:
         img = img - img.min()
         img = img / img.max()
