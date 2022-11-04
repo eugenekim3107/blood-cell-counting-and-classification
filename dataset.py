@@ -5,6 +5,7 @@ import os
 from torch.utils.data import DataLoader
 import cv2
 import numpy as np
+from commonFunc import prediction_img
 
 # Image shape = (960, 1280, 3)
 # 6 classes
@@ -76,27 +77,7 @@ def main():
     train_loader = DataLoader(dataset=train_set, batch_size=batch_size,
                               shuffle=True)
     for (image,label) in train_loader:
-        img = image[0].numpy()
-        img = (img * 255).astype(np.uint8)
-        lab = label[0]
-        height_cell = 960 / 15
-        width_cell = 1280 / 15
-        for i in range(15):
-            for j in range(15):
-                bbox = lab[i,j,6:11]
-                if bbox[0] == 1:
-                    temp_height = height_cell * i
-                    temp_width = width_cell * j
-                    x = bbox[1] * (1280 / 15)
-                    y = bbox[2] * (960 / 15)
-                    please_x = int(temp_width + x)
-                    please_y = int(temp_height + y)
-                    left_top = (int(please_x - (bbox[3]/2)), int(please_y - (bbox[4]/2)))
-                    right_bottom = (int(please_x + (bbox[3]/2)), int(please_y + (bbox[4]/2)))
-                    cv2.circle(img, (please_x, please_y), radius=3, color=(0, 0, 255), thickness=4)
-                    cv2.rectangle(img, left_top, right_bottom, (0, 255, 0),
-                             thickness=2)
-        cv2.imwrite("please.jpg", img)
+        prediction_img(image[0],label[0],"cellDetectionVisual/labelDataTest.jpg")
         break
 
 if __name__ == '__main__':
