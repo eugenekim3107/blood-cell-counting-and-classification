@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from utils import intersection_over_union
+from commonFunc import IOU
 
 class YoloLoss(nn.Module):
     def __init__(self, S=7, B=2, C=6):
@@ -14,9 +14,9 @@ class YoloLoss(nn.Module):
 
     def forward(self, predictions, target):
         predictions = predictions.reshape(-1, self.S, self.S, self.C + self.B*5)
-        iou_b1 = intersection_over_union(predictions[..., self.C+1:self.C+5],
+        iou_b1 = IOU(predictions[..., self.C+1:self.C+5],
                                          target[..., self.C+1:self.C+5])
-        iou_b2 = intersection_over_union(predictions[..., self.C+6:self.C+10],
+        iou_b2 = IOU(predictions[..., self.C+6:self.C+10],
                                          target[..., self.C+1:self.C+5])
         ious = torch.cat([iou_b1.unsqueeze(0), iou_b2.unsqueeze(0)], dim=0)
         iou_maxes, bestbox = torch.max(ious, dim=0)

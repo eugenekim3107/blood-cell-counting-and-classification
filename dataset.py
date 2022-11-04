@@ -42,9 +42,10 @@ class CellDataset(Dataset):
         boxes = torch.tensor(boxes)
 
         if self.transform:
-            image = image.reshape((960, 1280, 3))
+            image = image.reshape((3, 960, 1280))
             image = (image - np.min(image))/ np.max(image)
             image = torch.from_numpy(image)
+            image = image.float()
 
         label_matrix = torch.zeros((self.S, self.S, self.C + 5 * self.B))
 
@@ -77,7 +78,7 @@ def main():
     train_loader = DataLoader(dataset=train_set, batch_size=batch_size,
                               shuffle=True)
     for (image,label) in train_loader:
-        prediction_img(image[0],label[0],"cellDetectionVisual/labelDataTest.jpg")
+        prediction_img(image[0],label[0], S=15, path="cellDetectionVisual/labelDataTest.jpg")
         break
 
 if __name__ == '__main__':
