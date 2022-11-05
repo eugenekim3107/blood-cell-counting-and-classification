@@ -10,6 +10,7 @@ from commonFunc import prediction_img
 # Image shape = (960, 1280, 3)
 # 6 classes
 # ['red blood cell', 'ring', 'gametocyte', 'schizont', 'trophozoite', 'difficult']
+# 345 images
 
 class CellDataset(Dataset):
     def __init__(self, annotation_file, transform, S=7, B=2, C=6, dir_name="cellData", img_h=960, img_w=1280):
@@ -71,7 +72,6 @@ class CellDataset(Dataset):
 def main():
     dir_name = "cellData"
     file_name = "annotations.json"
-    # 345 images
     dataset = CellDataset(annotation_file=os.path.join(dir_name,file_name),transform=True, S=15)
     batch_size = 1
     train_set, test_set = torch.utils.data.random_split(dataset, [275, 70])

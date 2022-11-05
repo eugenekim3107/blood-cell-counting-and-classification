@@ -8,7 +8,7 @@ architecture_config = [
     (3, 192, 1, 1),
     "M",
     (1, 128, 1, 0),
-    (3, 256, 1, 1),
+    (1, 256, 1, 1),
     (1, 256, 1, 0),
     (3, 512, 1, 1),
     "M",
@@ -44,8 +44,9 @@ class Yolov1(nn.Module):
 
     def forward(self,x):
         x = self.darknet(x)
-        print(x.shape)
-        return self.fcs(torch.flatten(x, start_dim=1))
+        x = self.fcs(torch.flatten(x, start_dim=1))
+        x = torch.reshape(x, (-1, 7, 7, 16))
+        return x
 
     def _create_conv_layers(self, architecture):
         layers = []
@@ -93,16 +94,13 @@ class Yolov1(nn.Module):
         S, B, C = split_size, num_boxes, num_classes
         return nn.Sequential(
             nn.Flatten(),
-            nn.Linear(1024 * S * S, 496),
+            nn.Linear(1024 * 15 * 20, 496),
             nn.Dropout(0.0),
             nn.LeakyReLU(0.1),
             nn.Linear(496, S * S * (C + B * 5)),
         )
 
-def test(S=15, B=2, C=6):
+def test(S=7, B=2, C=6):
     model = Yolov1(split_size=S, num_boxes=B, num_classes=C)
-    x = torch.randn((2, 3, 960, 1280)) #448
-    print(model(x).dtype)
-
-test()
-
+    x = torch.randn((5, 3, 960, 1280)) #448
+    print(model(x).shape)

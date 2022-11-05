@@ -10,7 +10,7 @@ class YoloLoss(nn.Module):
         self.B = B
         self.C = C
         self.lambda_noobj = 0.5
-        self.lambd_coord = 5
+        self.lambda_coord = 5
 
     def forward(self, predictions, target):
         predictions = predictions.reshape(-1, self.S, self.S, self.C + self.B*5)
@@ -25,7 +25,7 @@ class YoloLoss(nn.Module):
         # For box coordinates
         box_predictions = exists_box * (
             (
-                bestbox * predictions[..., ] + (1 - bestbox) * predictions[..., self.C+1:self.C+5]
+                bestbox * predictions[..., self.C+6:self.C+10] + (1 - bestbox) * predictions[..., self.C+1:self.C+5]
             )
         )
 
