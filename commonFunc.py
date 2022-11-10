@@ -27,7 +27,8 @@ def save_img(img, path, normalize=True):
 
 def prediction_img(img, label, S, path):
     image = img.numpy()
-    image = image.reshape((960, 1280, 3))
+    image = np.transpose(image, (1,2,0))
+    image = image.copy()
     image = (image * 255).astype(np.uint8)
     height_cell = 960 / S
     width_cell = 1280 / S

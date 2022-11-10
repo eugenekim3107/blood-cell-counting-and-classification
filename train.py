@@ -14,10 +14,11 @@ cellboxes_to_boxes,
 get_bboxes,
 )
 from loss import YoloLoss
+from torchvision import transforms
 
 # Hyperparemters etc.
 lr = 2e-5
-batch_size = 1
+batch_size = 50
 weight_decay = 0
 epochs = 10
 load_model = False
@@ -50,8 +51,8 @@ def main():
     file_name = "annotations.json"
     # 345 images
     dataset = CellDataset(annotation_file=os.path.join(dir_name, file_name),
-                          transform=True, S=7)
-    train_set, test_set = torch.utils.data.random_split(dataset, [1, 344])
+                          transform=transforms.ToTensor(), S=7)
+    train_set, test_set = torch.utils.data.random_split(dataset, [300, 45])
     train_loader = DataLoader(dataset=train_set, batch_size=batch_size, shuffle=True, drop_last=True)
     test_loader = DataLoader(dataset=test_set, batch_size=batch_size, shuffle=True, drop_last=True)
 

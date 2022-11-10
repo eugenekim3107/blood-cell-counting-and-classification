@@ -4,6 +4,9 @@ from torch.utils.data import Dataset
 import os
 from torch.utils.data import DataLoader
 import cv2
+from torchvision import transforms
+from PIL import Image
+import matplotlib.pyplot as plt
 import numpy as np
 from commonFunc import prediction_img
 
@@ -39,19 +42,18 @@ class CellDataset(Dataset):
                                   int(cell["bbox"]["w"]), \
                                   int(cell["bbox"]["h"])
             boxes.append([class_label, x, y, width, height])
-        image = cv2.imread(os.path.join(self.dir_name,image_name), cv2.IMREAD_COLOR)
+        image = Image.open(os.path.join(self.dir_name,image_name))
         boxes = torch.tensor(boxes)
 
         if self.transform:
-            image = image.reshape((3, 960, 1280))
-            image = (image - np.min(image))/ np.max(image)
-            image = torch.from_numpy(image)
-            image = image.float()
+            image = self.transform(image)
 
         label_matrix = torch.zeros((self.S, self.S, self.C + 5 * self.B))
 
         for box in boxes:
             class_label, x, y, width, height = box.tolist()
+            width = width / 1280.
+            height = height / 960.
             class_label = int(class_label)
             x_norm = (x + (width / 2)) / self.img_w
             y_norm = (y + (height / 2)) / self.img_h
@@ -72,7 +74,7 @@ class CellDataset(Dataset):
 def main():
     dir_name = "cellData"
     file_name = "annotations.json"
-    dataset = CellDataset(annotation_file=os.path.join(dir_name,file_name),transform=True, S=15)
+    dataset = CellDataset(annotation_file=os.path.join(dir_name,file_name),transform=transforms.ToTensor(), S=15)
     batch_size = 1
     train_set, test_set = torch.utils.data.random_split(dataset, [275, 70])
     train_loader = DataLoader(dataset=train_set, batch_size=batch_size,

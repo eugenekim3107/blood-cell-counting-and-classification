@@ -47,7 +47,6 @@ class Yolov1(nn.Module):
         x = self.fcs(torch.flatten(x, start_dim=1))
         x = torch.reshape(x, (-1, 7, 7, 16))
         return x
-
     def _create_conv_layers(self, architecture):
         layers = []
         in_channels = self.in_channels
