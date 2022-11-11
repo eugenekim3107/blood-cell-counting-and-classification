@@ -3,7 +3,7 @@ import torch.nn as nn
 from commonFunc import IOU
 
 class YoloLoss(nn.Module):
-    def __init__(self, S=7, B=2, C=6):
+    def __init__(self, S=15, B=2, C=6):
         super(YoloLoss, self).__init__()
         self.mse = nn.MSELoss(reduction="sum")
         self.S = S

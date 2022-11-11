@@ -80,6 +80,7 @@ def main():
     train_loader = DataLoader(dataset=train_set, batch_size=batch_size,
                               shuffle=True)
     for (image,label) in train_loader:
+        print(image.shape, label.shape)
         prediction_img(image[0],label[0], S=15, path="cellDetectionVisual/labelDataTest.jpg")
         break
 

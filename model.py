@@ -45,7 +45,7 @@ class Yolov1(nn.Module):
     def forward(self,x):
         x = self.darknet(x)
         x = self.fcs(torch.flatten(x, start_dim=1))
-        x = torch.reshape(x, (-1, 7, 7, 16))
+        x = torch.reshape(x, (-1, 15, 15, 16))
         return x
     def _create_conv_layers(self, architecture):
         layers = []
@@ -99,7 +99,10 @@ class Yolov1(nn.Module):
             nn.Linear(496, S * S * (C + B * 5)),
         )
 
-def test(S=7, B=2, C=6):
-    model = Yolov1(split_size=S, num_boxes=B, num_classes=C)
-    x = torch.randn((5, 3, 960, 1280)) #448
+def main():
+    model = Yolov1(split_size=15, num_boxes=2, num_classes=6)
+    x = torch.randn((5, 3, 960, 1280))
     print(model(x).shape)
+
+if __name__ == "__main__":
+    main()
